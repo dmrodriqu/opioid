@@ -3,7 +3,7 @@
 
 # TEAM
 
-    <name> -- <role> -- <twitter>
+    <Dylan Rodriquez> -- <Graduate Student> -- <dmrodriqu>
 
 # THANKS
 

@@ -22,14 +22,152 @@
   <![endif]-->
 
   <!-- Add your site or application content here -->
-  <p>Hello world! This is HTML5 Boilerplate.</p>
+  <h1>This is what 19.8 Deaths per 100,000 people looks like, but why call it an epidemic?</h1>
+  <div>
+  </div>
   <script src="js/vendor/modernizr-3.6.0.min.js"></script>
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <script>
-      d3.csv('/data/opiatedata.csv', function(data){
+
+
+  // function to get age normalized death data
+    function getData(){
+      var dat = d3.csv('https://raw.githubusercontent.com/dmrodriqu/datasets/master/opiatedata.csv', function(data){
+        return{
+          State: data['State Name'],
+          County: data['County Name'],
+          Deaths: data['deathmax']
+        }
+      })
+      return dat
+  }
+
+  // function to create svg elements
+    function createSvgElement(w, h, d){
+      d3.select('body')
+        .append('svg')
+        .attr("width", w)
+        .attr("height",h)
+        .attr('id', d)
+    }
+
+  // on tick perform force simulation
+
+    function ticked(){
+      var d = d3.select('#first')
+        .selectAll('circle')
+        .data(nationalnodes)
+
+      d.enter()
+        .append('circle')
+        .attr('r', d=>d.radius)
+        .merge(d)
+        .attr('cx', d => d.x)
+        .attr('cy', d=>d.y)
+        .attr("fill", function(d) {
+          if (d.dth == true) {
+            return 'red'
+          }else{
+            return 'black'}
+        })
+      d.exit().remove()
+    }
+
+// need to fix, extraneous, but ansync broken when
+// addl arg added
+    function tickedc(){
+      var d = d3.select('#viscountyrate')
+        .selectAll('circle')
+        .data(nationalnodes)
+
+      d.enter()
+        .append('circle')
+        .attr('r', d=>d.radius)
+        .merge(d)
+        .attr('cx', d => d.x)
+        .attr('cy', d=>d.y)
+        .attr("fill", function(d) {
+          if (d.dth == true) {
+            return 'red'
+          }else{
+            return 'black'}
+        })
+      d.exit().remove()
+    }
+
+  // generate data for simulation, death count  == calcdeath
+  // each d is equivalent to 100 people, total is 1000. 
+  // age adjusted 100,000
+  // if less than 100, then reduce size of death dot
+  function nodemaker(numberOfNodes, calcdeath, radius){
+    var deathradii = d3.
+      scaleSqrt()
+      .domain([0, 1])
+      .range([0, 5])
+    var nodes  = d3.range(numberOfNodes).map(function(d){
+      if (d<calcdeath) {
+        var death =  true
+      }else{
+        var death = false
       }
-    )
+      if (d == 0 & calcdeath < 1){
+        return {
+          radius: deathradii(calcdeath),
+          dth : death
+        }
+      }
+      else{
+        return {
+          radius: radius,
+          dth : death
+        }
+      }
+      })
+    return nodes
+  }
+
+    
+    
+    
+    function createSimulation(whichnodes, whichtick){
+      var simulation = d3.forceSimulation(whichnodes)
+        .force('charge', d3.forceManyBody().strength(0.3))
+        .force('center', d3.forceCenter(firstwidth/2, firstheight/2))
+        .force('collision', d3.forceCollide().radius(function(d) {
+          return d.radius
+          }))
+        .on('tick', whichtick);
+    }
+
+
+    var firstwidth = 640,
+      firstheight = 480;
+    
+    var marginl = 10,
+      marginr = 10,
+      margint = 10,
+      marginb = 10;
+
+    createSvgElement(firstwidth, firstheight, "first")
+    var nationalnodes = nodemaker(1000, 0.198, 5)
+    createSimulation(nationalnodes, ticked)
+
+
+    getData().then(function (data){
+      var normgrouped = d3.nest()
+      .key(d=>d.State)
+      .key(d=>d.County)
+      .rollup(v=>+v[0].Deaths)
+      .entries(data)
+    console.log(normgrouped)
+    createSvgElement(firstwidth, firstheight, "viscountyrate")
+    var countynode = nodemaker(1000, 0.198, 5)
+    createSimulation(countynode, tickedc)
+    })
+
+
   </script>
+  <h2>This is the National Average</h2>
   <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
   <script>window.jQuery || document.write('<script src="js/vendor/jquery-3.3.1.min.js"><\/script>')</script>
   <script src="js/plugins.js"></script>

@@ -1,3 +1,4 @@
+from math import log1p
 import numpy as np
 import pandas as pd
 from glob import glob
@@ -26,7 +27,8 @@ def partition(df, itemtoreplace, replace, inp = True):
     return df.replace(itemtoreplace, replace, inplace = inp)
 
 def divide(df, column1, column2, newcolumnname):
-    df[newcolumnname]= df[column1]/df[column2]
+    df[newcolumnname]=df[column1]/((1)/((df[column2]*100.0)/100000))
+    df[newcolumnname] = df[newcolumnname].apply(log1p)
     return df
 
 def replaceAndCleanInf(df):
